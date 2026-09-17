@@ -48,6 +48,15 @@ class Report:
         return sum(1 for h in self.hits if h.hit.severity == "warn")
 
     @property
+    def skipped_summary(self) -> dict:
+        """Count of files a folder walk skipped, and how many per extension."""
+        by_ext: dict[str, int] = {}
+        for item in self.skipped:
+            by_ext[item["extension"]] = by_ext.get(item["extension"], 0) + 1
+        return {"count": len(self.skipped),
+                "extensions": dict(sorted(by_ext.items()))}
+
+    @property
     def exit_code(self) -> int:
         if self.errors:
             return EXIT_CONFIG
@@ -59,7 +68,8 @@ class Report:
         return {
             "hits": [h.as_dict() for h in self.hits],
             "stale": list(self.stale),
-            "skipped": list(self.skipped),
+            "skipped": self.skipped_summary,
+            "skipped_files": list(self.skipped),
             "errors": list(self.errors),
             "files": self.files,
             "fails": self.fails,
@@ -82,8 +92,11 @@ class Report:
             lines.append(
                 f"{s['path']}  stale  the allow-list exempts {s['rule']} but the file does not trip it"
             )
-        for s in self.skipped:
-            lines.append(f"{s['path']}  skipped  {s['reason']}")
+        summary = self.skipped_summary
+        if summary["count"]:
+            noun = "file" if summary["count"] == 1 else "files"
+            exts = ", ".join(f"{ext} ({n})" for ext, n in summary["extensions"].items())
+            lines.append(f"skipped {summary['count']} unsupported {noun} found by folder walk: {exts}")
         for e in self.errors:
             lines.append(f"error  {e}")
         noun = "file" if self.files == 1 else "files"
@@ -115,7 +128,7 @@ def collect_files(paths: list[str], root: Path) -> tuple[list[tuple[Path, str]],
             if explicit:
                 errors.append(f"{rel}: unsupported format '{path.suffix or 'no extension'}'")
             else:
-                skipped.append({"path": rel, "reason": f"unsupported format '{path.suffix or 'no extension'}'"})
+                skipped.append({"path": rel, "extension": path.suffix.lower() or "(none)"})
             return
         seen.add(rel)
         files.append((path, rel))

@@ -64,9 +64,9 @@ def run(out=print) -> int:
     for err in actual["errors"]:
         out(f"  UNEXPECTED error  {err}")
         problems.append(f"unexpected error: {err}")
-    for skipped in actual["skipped"]:
-        out(f"  UNEXPECTED skipped  {skipped}")
-        problems.append(f"unexpected skipped file: {skipped}")
+    if actual["skipped"]["count"]:
+        out(f"  UNEXPECTED skipped  {actual['skipped']}")
+        problems.append(f"unexpected skipped files under docs: {actual['skipped']}")
 
     out(f"  {'ok ' if actual['exit'] == expected['exit'] else 'WRONG '}exit code {actual['exit']} (expected {expected['exit']})")
     if actual["exit"] != expected["exit"]:
@@ -87,6 +87,19 @@ def run(out=print) -> int:
         f"{codes[1]} strict; clean file exits {codes[2]} strict")
     if not ok:
         problems.append(f"strict flag exit codes were {codes}, expected (0, 1, 0)")
+
+    # skip/ holds one document and three unsupported files. The walk may skip
+    # them, but must report the count and the extensions, never silently.
+    walk = run_lint(paths=[str(FIXTURES / "skip")], rules_path=FIXTURES / "rules.yaml",
+                    genres_path=FIXTURES / "genres.yaml", allow_path=None, root=FIXTURES)
+    want = {"count": 3, "extensions": {"(none)": 1, ".jpg": 1, ".png": 1}}
+    got = walk.as_dict()["skipped"]
+    human = walk.to_human()
+    ok = got == want and walk.files == 1 and walk.exit_code == 0 and \
+        "skipped 3 unsupported files found by folder walk: (none) (1), .jpg (1), .png (1)" in human
+    out(f"  {'ok ' if ok else 'WRONG '}folder walk reports skipped files: {got}")
+    if not ok:
+        problems.append(f"folder walk skip report was {got}, expected {want}; human output: {human!r}")
 
     try:
         rules = load_rules(FIXTURES / "rules.yaml")
