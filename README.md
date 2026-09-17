@@ -37,3 +37,22 @@ Releases are numbered so that a change to the rule-set format or to
 matching semantics changes the first number, and nothing else does.
 Every release carries a changelog entry in plain words. No release
 ships with a red self-test.
+
+## Use
+
+```
+pip install .                      # or pin a tagged release
+housestyle selftest                # must be green
+housestyle lint docs --rules rules.yaml --genres genres.yaml --allow allow.yaml
+housestyle preview --targets targets.txt --rules rules.yaml --standard standard.yaml
+```
+
+- [The rule-set format, genre map and allow-list](docs/rule-set.md)
+- [The voice lint](docs/lint.md)
+- [The share-preview checker](docs/preview.md)
+- [Changelog](CHANGELOG.md)
+
+The customer supplies its rule set, allow-list, genre map, targets
+file and minimum standard. If the customer holds its rules in another
+format, the customer writes and owns the adapter; the product never
+reads the customer's native format.
