@@ -3,6 +3,13 @@
 Releases are numbered so that a change to the rule-set format or to
 matching semantics changes the first number, and nothing else does.
 
+## 0.1.1, 17 September 2026
+
+- The voice lint now reports what a folder walk skipped: the count of
+  unsupported files and how many per extension, in both output forms,
+  with each skipped path listed in the JSON form. A skip is never
+  silent. The self-test checks this.
+
 ## 0.1.0, 17 September 2026
 
 The first release, built clean-room from the behavioural

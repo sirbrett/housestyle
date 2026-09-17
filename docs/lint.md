@@ -7,9 +7,11 @@ housestyle lint PATH... --rules rules.yaml --genres genres.yaml [--allow allow.y
 
 Paths may be files or folders. Folders are read recursively; entries
 whose names start with a dot are not documents and are not read. A
-file found by a folder walk whose format is not supported is listed
-as skipped in the report. A file named on the command line whose
-format is not supported is an error.
+folder walk may skip files whose format is not supported, but never
+silently: the report gives the count skipped and how many per
+extension, and the JSON form lists each skipped path as well. A file
+named on the command line whose format is not supported is an
+error.
 
 ## Formats read
 
@@ -40,6 +42,7 @@ Human form, one hit per line:
 docs/bad.md:3:4  fail  no-leverage  "leverage"  Write "use" instead.
 docs/report.pdf:1:1 (property title)  fail  no-key  "Key"  Say what makes it important instead of calling it key.
 docs/internal/banned-terms.md  stale  the allow-list exempts no-key but the file does not trip it
+skipped 3 unsupported files found by folder walk: (none) (1), .jpg (1), .png (1)
 2 files checked, 2 fail, 0 warn
 ```
 
@@ -53,7 +56,8 @@ Machine form (`--format json`) carries the same hits:
      "remedy": "Write \"use\" instead."}
   ],
   "stale": [{"path": "docs/internal/banned-terms.md", "rule": "no-key", "why": "..."}],
-  "skipped": [],
+  "skipped": {"count": 3, "extensions": {"(none)": 1, ".jpg": 1, ".png": 1}},
+  "skipped_files": [{"path": "docs/logo.png", "extension": ".png"}],
   "errors": [],
   "files": 2, "fails": 2, "warns": 0, "exit": 1
 }
