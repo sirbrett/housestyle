@@ -1,0 +1,27 @@
+{
+  "exit": 1,
+  "hits": [
+    {"path": "docs/bad.md", "part": null, "line": 3, "col": 4, "rule": "no-leverage", "severity": "fail", "match": "leverage", "remedy": "Write \"use\" instead."},
+    {"path": "docs/bad.md", "part": null, "line": 4, "col": 12, "rule": "no-the-workshop", "severity": "warn", "match": "the workshops", "remedy": "Call it the session."},
+    {"path": "docs/bad.md", "part": null, "line": 5, "col": 4, "rule": "spell-organise", "severity": "fail", "match": "organize", "remedy": "Use the British spelling, organise."},
+    {"path": "docs/bad.md", "part": null, "line": 5, "col": 36, "rule": "no-em-dash", "severity": "fail", "match": "—", "remedy": "Replace the em dash with a comma, a colon or a full stop."},
+    {"path": "docs/bad.md", "part": null, "line": 6, "col": 9, "rule": "not-x-but-y", "severity": "warn", "match": "not a pitch, but", "remedy": "State the thing directly instead of first denying its opposite."},
+    {"path": "docs/bad.md", "part": null, "line": 8, "col": 15, "rule": "no-double-hyphen", "severity": "warn", "match": "--", "remedy": "Replace the double hyphen with a comma, a colon or a full stop."},
+    {"path": "docs/bad.md", "part": null, "line": 9, "col": 5, "rule": "brand-case", "severity": "fail", "match": "HouseStyle", "remedy": "Write the product name as Housestyle."},
+    {"path": "docs/boundary.md", "part": null, "line": 3, "col": 47, "rule": "no-key", "severity": "fail", "match": "keys", "remedy": "Say what makes it important instead of calling it key."},
+    {"path": "docs/boundary.md", "part": null, "line": 4, "col": 8, "rule": "no-the-workshop", "severity": "warn", "match": "the workshops", "remedy": "Call it the session."},
+    {"path": "docs/boundary.md", "part": null, "line": 4, "col": 26, "rule": "no-the-workshop", "severity": "warn", "match": "the workshop's", "remedy": "Call it the session."},
+    {"path": "docs/icon.svg", "part": null, "line": 3, "col": 33, "rule": "no-leverage", "severity": "fail", "match": "Leverage", "remedy": "Write \"use\" instead."},
+    {"path": "docs/method/approach.md", "part": null, "line": 4, "col": 4, "rule": "no-leverage", "severity": "fail", "match": "leverage", "remedy": "Write \"use\" instead."},
+    {"path": "docs/page.html", "part": null, "line": 5, "col": 12, "rule": "no-key", "severity": "fail", "match": "key", "remedy": "Say what makes it important instead of calling it key."},
+    {"path": "docs/page.html", "part": null, "line": 12, "col": 11, "rule": "no-the-workshop", "severity": "warn", "match": "the workshops", "remedy": "Call it the session."},
+    {"path": "docs/page.html", "part": null, "line": 13, "col": 44, "rule": "no-em-dash", "severity": "fail", "match": "—", "remedy": "Replace the em dash with a comma, a colon or a full stop."},
+    {"path": "docs/report.pdf", "part": "page 1", "line": 1, "col": 4, "rule": "no-leverage", "severity": "fail", "match": "leverage", "remedy": "Write \"use\" instead."},
+    {"path": "docs/report.pdf", "part": "page 1", "line": 1, "col": 13, "rule": "no-the-workshop", "severity": "warn", "match": "the workshops", "remedy": "Call it the session."},
+    {"path": "docs/report.pdf", "part": "property title", "line": 1, "col": 1, "rule": "no-key", "severity": "fail", "match": "Key", "remedy": "Say what makes it important instead of calling it key."},
+    {"path": "docs/report.pdf", "part": "property subject", "line": 1, "col": 1, "rule": "no-leverage", "severity": "fail", "match": "Leverage", "remedy": "Write \"use\" instead."}
+  ],
+  "stale": [
+    {"path": "docs/internal/banned-terms.md", "rule": "no-key", "why": "This document names the banned terms so that writers know them."}
+  ]
+}

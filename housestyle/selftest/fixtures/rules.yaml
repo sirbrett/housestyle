@@ -1,0 +1,72 @@
+# Fixture rule set for the Housestyle self-test.
+# Not a customer's rules: it exists only to exercise every rule kind.
+format: 1
+rules:
+  - id: no-leverage
+    kind: word
+    severity: fail
+    terms: [leverage]
+    genres: [client-facing, internal, method]
+    remedy: Write "use" instead.
+
+  - id: no-key
+    kind: word
+    severity: fail
+    terms: [key]
+    genres: [client-facing, internal]
+    remedy: Say what makes it important instead of calling it key.
+
+  - id: brand-case
+    kind: word
+    severity: fail
+    case: exact
+    terms: [HouseStyle]
+    genres: [client-facing, internal, method]
+    remedy: Write the product name as Housestyle.
+
+  - id: no-the-workshop
+    kind: phrase
+    severity: warn
+    terms: ["the workshop"]
+    genres: [client-facing, internal]
+    remedy: Call it the session.
+
+  - id: spell-organise
+    kind: spelling
+    severity: fail
+    refuse: organize
+    prefer: organise
+    exceptions: ["Organize Inc"]
+    genres: [client-facing, internal, method]
+    remedy: Use the British spelling, organise.
+
+  - id: no-em-dash
+    kind: punctuation
+    severity: fail
+    terms: ["—"]
+    replacement: "a comma, a colon or a full stop"
+    genres: [client-facing, internal, method]
+    remedy: Replace the em dash with a comma, a colon or a full stop.
+
+  - id: no-spaced-en-dash
+    kind: punctuation
+    severity: fail
+    terms: [" – "]
+    replacement: "a comma, a colon or a full stop"
+    genres: [client-facing, internal, method]
+    remedy: Replace the en dash used as a dash with a comma, a colon or a full stop.
+
+  - id: no-double-hyphen
+    kind: punctuation
+    severity: warn
+    terms: ["--"]
+    replacement: "a comma, a colon or a full stop"
+    genres: [client-facing, internal, method]
+    remedy: Replace the double hyphen with a comma, a colon or a full stop.
+
+  - id: not-x-but-y
+    kind: pattern
+    severity: warn
+    pattern: '\bnot\b[^.;:!?\n]{1,80}?,\s*but\b'
+    genres: [client-facing, internal, method]
+    remedy: State the thing directly instead of first denying its opposite.

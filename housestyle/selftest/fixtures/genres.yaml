@@ -1,0 +1,5 @@
+# Path prefix to genre. The longest matching prefix wins.
+genres:
+  docs: client-facing
+  docs/internal: internal
+  docs/method: method
