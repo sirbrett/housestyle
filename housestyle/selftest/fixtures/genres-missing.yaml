@@ -1,0 +1,5 @@
+# A genre map with no 'method' genre, used to prove that a rule which
+# applies to a genre the map does not define is refused.
+genres:
+  docs: client-facing
+  docs/internal: internal

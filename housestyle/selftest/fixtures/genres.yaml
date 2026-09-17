@@ -3,3 +3,4 @@ genres:
   docs: client-facing
   docs/internal: internal
   docs/method: method
+  strict: client-facing
