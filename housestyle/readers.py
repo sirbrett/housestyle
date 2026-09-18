@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import html
 from bisect import bisect_right
+from io import BytesIO
 from dataclasses import dataclass, field
 from html.parser import HTMLParser
 from pathlib import Path
@@ -171,24 +172,40 @@ def _pdf_segments(path: Path) -> list[Segment]:
         raise ReadError(f"{path}: could not read PDF: {exc}")
 
 
-def pdf_properties(path: Path) -> dict[str, str | None]:
-    """The four document properties of a PDF, missing ones as None."""
+PDF_SIGNATURE = b"%PDF-"
+
+
+def is_pdf_bytes(data: bytes) -> bool:
+    """True when the bytes carry the PDF signature, wherever they came from."""
+    return data.lstrip()[:5] == PDF_SIGNATURE
+
+
+def pdf_properties(source: Path | bytes, name: str = "") -> dict[str, str | None]:
+    """The four document properties of a PDF, missing ones as None.
+
+    The source is a path, or the bytes of a PDF fetched from a URL, with
+    a name for messages. A fifth entry, 'date', carries the creation
+    date, or the modification date when there is none.
+    """
+    label = name or (str(source) if isinstance(source, Path) else "PDF")
     try:
         from pypdf import PdfReader
         from pypdf.errors import PdfReadError
     except ImportError as exc:  # pragma: no cover
-        raise ReadError(f"{path}: the pypdf package is needed to read PDF files: {exc}")
+        raise ReadError(f"{label}: the pypdf package is needed to read PDF files: {exc}")
     try:
-        reader = PdfReader(str(path))
+        reader = PdfReader(str(source) if isinstance(source, Path) else BytesIO(source))
         if reader.is_encrypted:
-            raise ReadError(f"{path}: the PDF is encrypted and cannot be read")
+            raise ReadError(f"{label}: the PDF is encrypted and cannot be read")
         metadata = reader.metadata or {}
     except ReadError:
         raise
     except (PdfReadError, OSError, ValueError, KeyError, TypeError) as exc:
-        raise ReadError(f"{path}: could not read PDF: {exc}")
+        raise ReadError(f"{label}: could not read PDF: {exc}")
     out: dict[str, str | None] = {}
-    for name, key in PDF_PROPERTIES:
+    for key_name, key in PDF_PROPERTIES + (("date", "/CreationDate"),):
         value = metadata.get(key)
-        out[name] = str(value).strip() if value is not None and str(value).strip() else None
+        if key_name == "date" and value is None:
+            value = metadata.get("/ModDate")
+        out[key_name] = str(value).strip() if value is not None and str(value).strip() else None
     return out

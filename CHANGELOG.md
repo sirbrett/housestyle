@@ -3,6 +3,17 @@
 Releases are numbered so that a change to the rule-set format or to
 matching semantics changes the first number, and nothing else does.
 
+## 0.1.2, 18 September 2026
+
+- The share-preview checker now reads a URL target by what it serves,
+  not by its extension: a body with Content-Type `application/pdf`,
+  or one that carries the PDF signature, is read as a PDF and gets the
+  document-properties check. Before this a PDF at a URL was read as a
+  page and failed every field. A local target that is not a PDF is an
+  error with a message. Tests cover a PDF served by content type at a
+  URL with no extension, and one served as `application/octet-stream`
+  identified by its signature alone.
+
 ## 0.1.1, 17 September 2026
 
 - The voice lint now reports what a folder walk skipped: the count of

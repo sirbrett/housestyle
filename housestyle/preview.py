@@ -16,7 +16,7 @@ import yaml
 from housestyle.engine import check_text
 from housestyle.errors import ConfigError, ReadError
 from housestyle.imagesize import image_size
-from housestyle.readers import pdf_properties
+from housestyle.readers import is_pdf_bytes, pdf_properties
 from housestyle.rules import Rule, load_rules
 
 CHECKS = ("title", "description", "image", "author", "date", "clean", "pdf")
@@ -293,19 +293,17 @@ def extract_page(target: Target, source: str, standard: Standard) -> None:
     target.site_name = parser.first(("property", "og:site_name"))
 
 
-def extract_pdf(target: Target, path: Path) -> None:
-    props = pdf_properties(path)
+def extract_pdf(target: Target, source: Path | bytes) -> None:
+    props = pdf_properties(source, name=target.target)
     target.fields.update({
         "title": props["title"], "description": props["subject"], "image": None,
-        "author": props["author"], "date": None, "keywords": props["keywords"],
+        "author": props["author"], "date": props["date"], "keywords": props["keywords"],
     })
-    try:
-        from pypdf import PdfReader
-        meta = PdfReader(str(path)).metadata or {}
-        raw = meta.get("/CreationDate") or meta.get("/ModDate")
-        target.fields["date"] = str(raw) if raw else None
-    except Exception:  # noqa: BLE001 - properties already read; date is best effort
-        target.fields["date"] = None
+
+
+def _looks_like_pdf(data: bytes, content_type: str) -> bool:
+    """A body is a PDF by its Content-Type or its signature, never by its URL."""
+    return "application/pdf" in (content_type or "").lower() or is_pdf_bytes(data)
 
 
 # --- checks --------------------------------------------------------------
@@ -415,14 +413,24 @@ def run_preview(targets_path: Path, rules_path: Path, standard_path: Path,
 
     for t in targets:
         try:
-            if t.kind == "pdf":
+            if "://" not in t.target:
                 path = Path(t.target)
                 if not path.is_file():
                     raise ReadError(f"{t.target}: not a file")
+                with path.open("rb") as fh:
+                    head = fh.read(1024)
+                if not is_pdf_bytes(head):
+                    raise ReadError(f"{t.target}: not a PDF (a local target must be a PDF file)")
+                t.kind = "pdf"
                 extract_pdf(t, path)
             else:
                 data, content_type = _fetch(t.target, timeout)
-                extract_page(t, _decode(data, content_type), standard)
+                if _looks_like_pdf(data, content_type):
+                    t.kind = "pdf"
+                    extract_pdf(t, data)
+                else:
+                    t.kind = "page"
+                    extract_page(t, _decode(data, content_type), standard)
         except ReadError as exc:
             _fail_all(t, str(exc))
         except (urllib.error.URLError, urllib.error.HTTPError, OSError, ValueError) as exc:

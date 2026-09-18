@@ -50,6 +50,9 @@ PAGES = {
 <meta name="author" content="Jo Bloggs"><meta name="date" content="2026-01-02"></head></html>""",
 }
 IMAGES = {"/big.png": png(1200, 627), "/small.png": png(800, 418)}
+PDF_BYTES = (FIXTURES / "docs" / "report.pdf").read_bytes()
+BLOBS = {"/download/42": (PDF_BYTES, "application/pdf"),
+         "/files/report": (PDF_BYTES, "application/octet-stream")}
 
 
 class Handler(http.server.BaseHTTPRequestHandler):
@@ -65,6 +68,10 @@ class Handler(http.server.BaseHTTPRequestHandler):
             body = IMAGES[self.path]
             self.send_response(200)
             self.send_header("Content-Type", "image/png")
+        elif self.path in BLOBS:
+            body, content_type = BLOBS[self.path]
+            self.send_response(200)
+            self.send_header("Content-Type", content_type)
         else:
             body = b"not found"
             self.send_response(404)
@@ -99,6 +106,7 @@ class PreviewTest(unittest.TestCase):
             "# comment line", f"{cls.base}/good.html", f"{cls.base}/bad.html",
             f"{cls.base}/dup1.html", f"{cls.base}/dup2.html",
             str(FIXTURES / "docs" / "report.pdf"), "http://127.0.0.1:9/unreachable.html", "",
+            f"{cls.base}/download/42", f"{cls.base}/files/report", str(FIXTURES / "docs" / "good.md"),
         ]))
         cls.out = cls.dir / "cards.html"
         cls.report = run_preview(cls.dir / "targets.txt", FIXTURES / "rules.yaml",
@@ -152,6 +160,20 @@ class PreviewTest(unittest.TestCase):
         self.assertEqual(s["clean"], "fail")
         self.assertEqual({h["field"] for h in t.hits}, {"title", "description"})
 
+    def test_pdf_at_a_url_is_read_as_a_pdf(self):
+        for name in ("42", "report"):
+            t = self.by_name[name]
+            self.assertEqual(t.kind, "pdf", name)
+            s = {k: v.status for k, v in t.checks.items()}
+            self.assertEqual(s["pdf"], "pass", name)
+            self.assertEqual(s["image"], "n/a", name)
+            self.assertEqual(t.fields["title"], "Key findings", name)
+            self.assertEqual(t.fields["keywords"], "workshops, sessions", name)
+
+    def test_local_target_that_is_not_a_pdf_fails_with_a_message(self):
+        t = self.by_name["good.md"]
+        self.assertIn("not a PDF", t.error)
+
     def test_unreachable_target_fails_everything_with_a_message(self):
         t = self.by_name["unreachable.html"]
         self.assertIsNotNone(t.error)
@@ -159,16 +181,16 @@ class PreviewTest(unittest.TestCase):
 
     def test_exit_code_and_outputs(self):
         self.assertEqual(self.report.exit_code, 1)
-        self.assertEqual(self.report.failed, 5)
+        self.assertEqual(self.report.failed, 8)
         data = json.loads(self.report.to_json())
-        self.assertEqual(data["checked"], 6)
+        self.assertEqual(data["checked"], 9)
         self.assertIn("does not change a card", data["note"])
         human = self.report.to_human()
         self.assertIn("PASS", human)
         self.assertIn("re-scrapes", human)
         page = self.out.read_text()
         self.assertIn("Why we changed our pricing", page)
-        self.assertEqual(page.count('<section class="card'), 6)
+        self.assertEqual(page.count('<section class="card'), 9)
         self.assertNotIn("—", page)
 
     def test_standard_validation(self):
