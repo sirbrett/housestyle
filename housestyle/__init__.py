@@ -1,3 +1,3 @@
 """Housestyle: check written material against an organisation's house voice."""
 
-__version__ = "0.1.2"
+__version__ = "0.2.0"

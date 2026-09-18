@@ -117,6 +117,8 @@ def run(out=print) -> int:
     if unknown.exit_code != 2:
         problems.append("an unknown path did not exit 2")
 
+    problems.extend(_served_case(out))
+
     if problems:
         out(f"SELF-TEST RED: {len(problems)} expectation(s) moved")
         for p in problems:
@@ -124,3 +126,70 @@ def run(out=print) -> int:
         return 1
     out(f"SELF-TEST GREEN: {len(act_hits)} hits, {len(actual['stale'])} stale entry, exit codes as expected")
     return 0
+
+
+def _served_case(out) -> list[str]:
+    """Start the server, check a known-bad document, check it again with an
+    override, check the health route, stop."""
+    import json
+    import threading
+    import urllib.request
+
+    from housestyle import __version__
+    from housestyle.serve import build_server, finding_id, load
+
+    problems: list[str] = []
+    loaded = load(FIXTURES / "rules.yaml", FIXTURES / "genres.yaml", FIXTURES / "allow.yaml",
+                  root=FIXTURES)
+    server = build_server(loaded, "127.0.0.1", 0)
+    base = f"http://127.0.0.1:{server.server_address[1]}"
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+
+    def call(method, path, body=None):
+        data = json.dumps(body).encode() if body is not None else None
+        req = urllib.request.Request(base + path, data=data, method=method,
+                                     headers={"Content-Type": "application/json"})
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            return resp.status, json.loads(resp.read())
+
+    try:
+        bad = (FIXTURES / "docs" / "bad.md").read_text(encoding="utf-8")
+        doc = {"id": "bad.md", "genre": "client-facing", "format": "text", "text": bad}
+
+        status, first = call("POST", "/check", doc)
+        # The same hits as the lint finds in docs/bad.md, in the same order.
+        expected = [(h["rule"], h["match"], h["line"], h["col"])
+                    for h in json.loads(EXPECTED.read_text())["hits"] if h["path"] == "docs/bad.md"]
+        got = [(f["rule"], f["match"], f["line"], f["col"]) for f in first["findings"]]
+        ok = status == 200 and first["verdict"] == "fail" and got == expected
+        out(f"  {'ok ' if ok else 'WRONG '}served: bad document gives verdict {first.get('verdict')} "
+            f"with {len(first.get('findings', []))} findings matching the lint")
+        if not ok:
+            problems.append(f"served check of bad.md: status {status}, verdict {first.get('verdict')}, findings {got}")
+
+        fails = [f for f in first["findings"] if f["severity"] == "fail"]
+        overrides = [{"rule": f["rule"], "match": f["match"]} for f in fails]
+        status, second = call("POST", "/check", {**doc, "overrides": overrides})
+        overridden = [f for f in second["findings"] if f["severity"] == "overridden"]
+        ids_stable = all(f["finding"] == finding_id(f["rule"], f["match"]) for f in second["findings"])
+        same_ids = [f["finding"] for f in first["findings"]] == [f["finding"] for f in second["findings"]]
+        ok = (status == 200 and second["verdict"] == "warn" and len(overridden) == len(fails)
+              and ids_stable and same_ids)
+        out(f"  {'ok ' if ok else 'WRONG '}served: with every fail overridden the verdict is "
+            f"{second.get('verdict')}, {len(overridden)} findings marked overridden, ids stable")
+        if not ok:
+            problems.append(f"served override check: verdict {second.get('verdict')}, overridden {len(overridden)} of {len(fails)}")
+
+        status, h = call("GET", "/health")
+        ok = status == 200 and h.get("release") == __version__ and h.get("rules_format") == 1 \
+            and len(h.get("rules_sha256", "")) == 64
+        out(f"  {'ok ' if ok else 'WRONG '}served: /health reports release {h.get('release')}, "
+            f"rule-set format {h.get('rules_format')}")
+        if not ok:
+            problems.append(f"served health: {status} {h}")
+    finally:
+        server.shutdown()
+        server.server_close()
+    out("  ok  served: stopped")
+    return problems

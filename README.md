@@ -45,11 +45,13 @@ pip install .                      # or pin a tagged release
 housestyle selftest                # must be green
 housestyle lint docs --rules rules.yaml --genres genres.yaml --allow allow.yaml
 housestyle preview --targets targets.txt --rules rules.yaml --standard standard.yaml
+housestyle serve --port 8080 --rules rules.yaml --genres genres.yaml --allow allow.yaml
 ```
 
 - [The rule-set format, genre map and allow-list](docs/rule-set.md)
 - [The voice lint](docs/lint.md)
 - [The share-preview checker](docs/preview.md)
+- [Serve mode](docs/serve.md)
 - [Changelog](CHANGELOG.md)
 
 The customer supplies its rule set, allow-list, genre map, targets

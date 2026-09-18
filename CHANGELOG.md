@@ -3,6 +3,24 @@
 Releases are numbered so that a change to the rule-set format or to
 matching semantics changes the first number, and nothing else does.
 
+## 0.2.0, 18 September 2026
+
+The interface grew, so the second number moves. The rule-set format
+and matching are unchanged; a 0.1 rule set loads as it did.
+
+- Serve mode: `housestyle serve` runs the rule engine behind a
+  stateless HTTP server. POST /check takes a document id, a genre,
+  text as plain text or HTML, and optional overrides keyed on a rule
+  id and the exact matched text; it returns a verdict of pass, fail
+  or warn and findings with a stable finding id, line and column,
+  severity and remedy. GET /health reports the release and the
+  loaded rule set. An optional bearer token comes from
+  `HOUSESTYLE_TOKEN`. A malformed rule set refuses to start with
+  exit code 2. Documented in `docs/serve.md`.
+- The self-test gains a served case: start, check a known-bad
+  document, check it again with an override, check the health
+  route, stop.
+
 ## 0.1.2, 18 September 2026
 
 - The share-preview checker now reads a URL target by what it serves,
