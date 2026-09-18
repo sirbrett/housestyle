@@ -8,6 +8,11 @@ housestyle preview --targets targets.txt --rules rules.yaml --standard standard.
 The targets file has one entry per line: a URL, or a path to a PDF.
 Blank lines and lines starting with `#` are ignored.
 
+What a URL serves decides how it is read, never the URL itself: the
+body is a PDF when the response's Content-Type is `application/pdf`
+or the bytes carry the PDF signature, and a page otherwise. A local
+target must be a PDF file; any other file is an error with a message.
+
 For each target the checker extracts the fields a link unfurler
 reads and renders one small preview card per target into the page
 named by `--out`, so the result is seen rather than read. It fetches
