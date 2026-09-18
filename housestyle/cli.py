@@ -38,6 +38,15 @@ def build_parser() -> argparse.ArgumentParser:
     preview.add_argument("--format", choices=("human", "json"), default="human")
     preview.add_argument("--timeout", type=float, default=15.0, help="seconds per fetch")
 
+    serve = sub.add_parser("serve", help="check documents over HTTP, statelessly")
+    serve.add_argument("--port", required=True, type=int, help="port to listen on")
+    serve.add_argument("--host", default="127.0.0.1", help="address to bind (default 127.0.0.1)")
+    serve.add_argument("--rules", required=True, type=Path, help="the rule set (YAML)")
+    serve.add_argument("--genres", required=True, type=Path, help="the genre map (YAML)")
+    serve.add_argument("--allow", type=Path, default=None, help="the allow-list (YAML)")
+    serve.add_argument("--root", type=Path, default=None,
+                       help="allow-list paths resolve against this folder (default: current folder)")
+
     sub.add_parser("selftest", help="run the lint self-test against the shipped fixtures")
     return parser
 
@@ -61,6 +70,10 @@ def main(argv: list[str] | None = None) -> int:
             )
             sys.stdout.write(report.to_json() if args.format == "json" else report.to_human())
             return report.exit_code
+        if args.command == "serve":
+            from housestyle.serve import run_serve
+            return run_serve(rules_path=args.rules, genres_path=args.genres, allow_path=args.allow,
+                             root=args.root, host=args.host, port=args.port)
         if args.command == "selftest":
             from housestyle.selftest.runner import run
             return run()
